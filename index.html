@@ -422,7 +422,7 @@
       let csv = "Timestamp,CO (mg/km),PM2.5 (mg/km),NOx (mg/km)\n";
       DATA_20S.forEach(row => {
         // Use raw ISO timestamp for clean CSV
-        csv += ${row.timestamp},${row.CO.toFixed(2)},${row.PM25.toFixed(2)},${row.NOx.toFixed(2)}\n;
+        csv += `${row.timestamp},${row.CO.toFixed(2)},${row.PM25.toFixed(2)},${row.NOx.toFixed(2)}\n`;
       });
 
       const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
