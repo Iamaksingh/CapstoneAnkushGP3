@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pollution Monitoring Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at center, #1e293b, #0f172a 65%);
+      color: #f8fafc;
+      padding: 30px;
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      margin-bottom: 30px;
+      color: #e2e8f0;
+      opacity: 0.9;
+      font-size: 0.95rem;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    /* 3 CARDS IN SINGLE ROW */
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 28px;
+      margin-bottom: 32px;
+    }
+
+    .card {
+      background: #0b1120;
+      border-radius: 20px;
+      padding: 34px 32px;
+      min-height: 200px;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.45);
+      border: 1px solid rgba(148,163,184,0.35);
+      transition: transform .18s ease-out, box-shadow .18s ease-out, border-color .18s ease-out;
+    }
+
+    .card:hover {
+      transform: translateY(-6px) scale(1.06);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.55);
+      border-color: #38bdf8;
+    }
+
+    .card-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    .value-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+
+    .value {
+      font-size: 2.7rem;
+      font-weight: 800;
+    }
+
+    .unit {
+      font-size: .9rem;
+      color: #9ca3af;
+      margin-left: 4px;
+    }
+
+    .status-chip {
+      padding: 5px 14px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .status-ok {
+      background: rgba(22, 163, 74, .18);
+      color: #4ade80;
+      border: 1px solid rgba(34,197,94,0.6);
+    }
+
+    .status-bad {
+      background: rgba(220,38,38,0.18);
+      color: #fca5a5;
+      border: 1px solid rgba(248,113,113,.7);
+    }
+
+    .value-bad {
+      color: #fca5a5;
+    }
+
+    .value-ok {
+      color: #fff;
+    }
+
+    .meta-limit {
+      margin-top: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fb6b6b;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #0b1120;
+      border-radius: 16px;
+      overflow: hidden;
+      margin-top: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.45);
+    }
+
+    th, td {
+      padding: 10px;
+      font-size: 0.88rem;
+      border-bottom: 1px solid rgba(51,65,85,0.6);
+      text-align: center;
+      color: #e2e8f0;
+    }
+
+    th {
+      background: #111827;
+      font-weight: 700;
+    }
+
+    .table-badge-bad {
+      color: #fecaca;
+      font-weight: bold;
+    }
+
+    .section-title {
+      margin-top: 18px;
+      margin-bottom: 8px;
+    }
+
+    .download-btn {
+      margin-top: 10px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      background: #38bdf8;
+      color: #020617;
+    }
+
+    .download-btn:hover {
+      opacity: 0.9;
+    }
+
+    @media(max-width: 750px) {
+      .cards {
+        grid-template-columns: 1fr;
+      }
+      .card { min-height: 180px; padding: 26px; }
+      .value { font-size: 2.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Pollution Monitoring Dashboard</h1>
+    <p class="subtitle">
+      BS6-compliant 2-Wheeler emissions simulation (Patiala, 26 Nov 2025).<br>
+      Dashboard updates <strong>every 1 minute</strong>, data logger saves <strong>every 20 seconds</strong>.
+    </p>
+
+    <!-- REAL-TIME CARDS (ONLY 3) -->
+    <div class="cards">
+      <div class="card">
+        <div class="card-title">Carbon Monoxide (CO)</div>
+        <div class="value-row">
+          <div><span id="coValue" class="value">--</span><span class="unit">mg/km</span></div>
+          <span id="coStatus" class="status-chip status-ok">--</span>
+        </div>
+        <div class="meta-limit">Limit (BS6 2-W): <strong>1000 mg/km</strong></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Particulate Matter (PM2.5)</div>
+        <div class="value-row">
+          <div><span id="pmValue" class="value">--</span><span class="unit">mg/km</span></div>
+          <span id="pmStatus" class="status-chip status-ok">--</span>
+        </div>
+        <div class="meta-limit">Limit (BS6 2-W): <strong>4.5 mg/km</strong></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">Nitrogen Oxides (NOx)</div>
+        <div class="value-row">
+          <div><span id="noxValue" class="value">--</span><span class="unit">mg/km</span></div>
+          <span id="noxStatus" class="status-chip status-ok">--</span>
+        </div>
+        <div class="meta-limit">Limit (BS6 2-W): <strong>60 mg/km</strong></div>
+      </div>
+    </div>
+
+    <p style="margin-bottom:8px; opacity:.8;" id="lastUpdated">Last updated: --</p>
+
+    <!-- DASHBOARD HISTORY (1-MIN VALUES) -->
+    <h2 class="section-title">Dashboard History (1-minute readings)</h2>
+    <div id="historyContainer">Waiting for dashboard data...</div>
+
+    <!-- EXCEL LOGGER (20-SEC VALUES) -->
+    <h2 class="section-title">Data Logger (Simulated Excel rows – every 20 seconds)</h2>
+    <div id="excelLogContainer">Waiting for logger data...</div>
+    <button id="downloadCsvBtn" class="download-btn">Download CSV for Excel</button>
+  </div>
+
+  <!-- SIMULATION SCRIPT (NO FIREBASE) -->
+  <script>
+    // ------------------------------------------------------------------
+    // 1. FULL DATA SET: 21 readings, every 20 seconds, for 7 minutes
+    //    Date: 26 Nov 2025, Time: 4:30:00 PM to ~4:36:40 PM
+    // ------------------------------------------------------------------
+    const DATA_20S = [
+      { timestamp: "2025-11-26T16:30:00", CO: 650, PM25: 2.3, NOx: 35 },
+      { timestamp: "2025-11-26T16:30:20", CO: 670, PM25: 2.4, NOx: 36 },
+      { timestamp: "2025-11-26T16:30:40", CO: 690, PM25: 2.5, NOx: 38 },
+
+      { timestamp: "2025-11-26T16:31:00", CO: 720, PM25: 2.6, NOx: 40 },
+      { timestamp: "2025-11-26T16:31:20", CO: 740, PM25: 2.7, NOx: 41 },
+      { timestamp: "2025-11-26T16:31:40", CO: 760, PM25: 2.8, NOx: 43 },
+
+      { timestamp: "2025-11-26T16:32:00", CO: 810, PM25: 3.0, NOx: 45 },
+      { timestamp: "2025-11-26T16:32:20", CO: 830, PM25: 3.1, NOx: 46 },
+      { timestamp: "2025-11-26T16:32:40", CO: 860, PM25: 3.3, NOx: 48 },
+
+      { timestamp: "2025-11-26T16:33:00", CO: 930, PM25: 3.6, NOx: 52 },
+      { timestamp: "2025-11-26T16:33:20", CO: 950, PM25: 3.7, NOx: 53 },
+      { timestamp: "2025-11-26T16:33:40", CO: 970, PM25: 4.0, NOx: 55 },
+
+      { timestamp: "2025-11-26T16:34:00", CO: 990, PM25: 4.3, NOx: 58 },
+      { timestamp: "2025-11-26T16:34:20", CO: 1005, PM25: 4.6, NOx: 61 }, // FAIL
+      { timestamp: "2025-11-26T16:34:40", CO: 1020, PM25: 4.8, NOx: 63 }, // FAIL
+
+      { timestamp: "2025-11-26T16:35:00", CO: 980, PM25: 4.2, NOx: 57 },
+      { timestamp: "2025-11-26T16:35:20", CO: 940, PM25: 3.9, NOx: 50 },
+      { timestamp: "2025-11-26T16:35:40", CO: 900, PM25: 3.5, NOx: 47 },
+
+      { timestamp: "2025-11-26T16:36:00", CO: 880, PM25: 3.3, NOx: 44 },
+      { timestamp: "2025-11-26T16:36:20", CO: 860, PM25: 3.1, NOx: 42 },
+      { timestamp: "2025-11-26T16:36:40", CO: 840, PM25: 3.0, NOx: 40 }
+    ];
+
+    // Indices (0-based) used for dashboard (one per minute → 7 readings)
+    const DASHBOARD_INDEXES = [0, 3, 6, 9, 12, 15, 18];
+
+    const LIMITS = { CO: 1000, PM25: 4.5, NOx: 60 };
+
+    // ------------------------------------------------------------------
+    // 2. DOM ELEMENTS
+    // ------------------------------------------------------------------
+    const coValueEl  = document.getElementById("coValue");
+    const pmValueEl  = document.getElementById("pmValue");
+    const noxValueEl = document.getElementById("noxValue");
+
+    const coStatusEl  = document.getElementById("coStatus");
+    const pmStatusEl  = document.getElementById("pmStatus");
+    const noxStatusEl = document.getElementById("noxStatus");
+
+    const lastUpdatedEl     = document.getElementById("lastUpdated");
+    const historyContainer  = document.getElementById("historyContainer");
+    const excelLogContainer = document.getElementById("excelLogContainer");
+    const downloadCsvBtn    = document.getElementById("downloadCsvBtn");
+
+    let dashboardHistoryRowsHtml = "";
+    let excelLogRowsHtml = "";
+    let dashboardIdx = 0; // index into DASHBOARD_INDEXES
+    let excelIdx = 0;     // index into DATA_20S
+
+    // ------------------------------------------------------------------
+    // 3. HELPERS
+    // ------------------------------------------------------------------
+    function setValueAndStatus(valueEl, statusEl, value, limit) {
+      const numVal = Number(value);
+      valueEl.textContent = numVal.toFixed(2);
+      valueEl.classList.remove("value-bad", "value-ok");
+
+      if (numVal >= limit) {
+        valueEl.classList.add("value-bad");
+        statusEl.textContent = "FAIL";
+        statusEl.className = "status-chip status-bad";
+      } else {
+        valueEl.classList.add("value-ok");
+        statusEl.textContent = "OK";
+        statusEl.className = "status-chip status-ok";
+      }
+    }
+
+    function formatTimestamp(ts) {
+      const d = new Date(ts);
+      if (isNaN(d.getTime())) return "--";
+      return d.toLocaleString(); // shows date + time
+    }
+
+    function renderDashboardHistoryTable() {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>CO (mg/km)</th>
+              <th>PM2.5 (mg/km)</th>
+              <th>NOx (mg/km)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${dashboardHistoryRowsHtml}
+          </tbody>
+        </table>
+      `;
+      historyContainer.innerHTML = html;
+    }
+
+    function renderExcelLogTable() {
+      const html = `
+        <table>
+          <thead>
+            <tr>
+              <th>Date & Time</th>
+              <th>CO (mg/km)</th>
+              <th>PM2.5 (mg/km)</th>
+              <th>NOx (mg/km)</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${excelLogRowsHtml}
+          </tbody>
+        </table>
+      `;
+      excelLogContainer.innerHTML = html;
+    }
+
+    // ------------------------------------------------------------------
+    // 4. DASHBOARD UPDATE (EVERY 1 MINUTE)
+    // ------------------------------------------------------------------
+    function pushNextDashboardReading() {
+      if (dashboardIdx >= DASHBOARD_INDEXES.length) {
+        clearInterval(dashboardInterval);
+        return;
+      }
+
+      const dataIndex = DASHBOARD_INDEXES[dashboardIdx];
+      const row = DATA_20S[dataIndex];
+
+      // Update top cards
+      setValueAndStatus(coValueEl,  coStatusEl,  row.CO,  LIMITS.CO);
+      setValueAndStatus(pmValueEl,  pmStatusEl,  row.PM25, LIMITS.PM25);
+      setValueAndStatus(noxValueEl, noxStatusEl, row.NOx, LIMITS.NOx);
+
+      lastUpdatedEl.textContent = "Last updated: " + formatTimestamp(row.timestamp);
+
+      // Add to dashboard history (1-min readings)
+      const coBad  = row.CO   >= LIMITS.CO;
+      const pmBad  = row.PM25 >= LIMITS.PM25;
+      const noxBad = row.NOx  >= LIMITS.NOx;
+
+      dashboardHistoryRowsHtml += `
+        <tr>
+          <td>${formatTimestamp(row.timestamp)}</td>
+          <td class="${coBad  ? "table-badge-bad" : ""}">${row.CO.toFixed(2)}</td>
+          <td class="${pmBad  ? "table-badge-bad" : ""}">${row.PM25.toFixed(2)}</td>
+          <td class="${noxBad ? "table-badge-bad" : ""}">${row.NOx.toFixed(2)}</td>
+        </tr>
+      `;
+
+      renderDashboardHistoryTable();
+      dashboardIdx++;
+    }
+
+    // ------------------------------------------------------------------
+    // 5. EXCEL LOGGER UPDATE (EVERY 20 SECONDS)
+    // ------------------------------------------------------------------
+    function pushNextExcelRow() {
+      if (excelIdx >= DATA_20S.length) {
+        clearInterval(excelInterval);
+        return;
+      }
+
+      const row = DATA_20S[excelIdx];
+
+      const coBad  = row.CO   >= LIMITS.CO;
+      const pmBad  = row.PM25 >= LIMITS.PM25;
+      const noxBad = row.NOx  >= LIMITS.NOx;
+
+      excelLogRowsHtml += `
+        <tr>
+          <td>${formatTimestamp(row.timestamp)}</td>
+          <td class="${coBad  ? "table-badge-bad" : ""}">${row.CO.toFixed(2)}</td>
+          <td class="${pmBad  ? "table-badge-bad" : ""}">${row.PM25.toFixed(2)}</td>
+          <td class="${noxBad ? "table-badge-bad" : ""}">${row.NOx.toFixed(2)}</td>
+        </tr>
+      `;
+
+      renderExcelLogTable();
+      excelIdx++;
+    }
+
+    // ------------------------------------------------------------------
+    // 6. CSV DOWNLOAD (FOR EXCEL)
+    // ------------------------------------------------------------------
+    downloadCsvBtn.addEventListener("click", () => {
+      let csv = "Timestamp,CO (mg/km),PM2.5 (mg/km),NOx (mg/km)\n";
+      DATA_20S.forEach(row => {
+        // Use raw ISO timestamp for clean CSV
+        csv += ${row.timestamp},${row.CO.toFixed(2)},${row.PM25.toFixed(2)},${row.NOx.toFixed(2)}\n;
+      });
+
+      const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "two_wheeler_bs6_patiala_26nov2025.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+
+    // ------------------------------------------------------------------
+    // 7. START SIMULATION
+    // ------------------------------------------------------------------
+    // Initialise empty tables
+    renderDashboardHistoryTable();
+    renderExcelLogTable();
+
+    // First immediate reading for both dashboard and excel
+    pushNextDashboardReading();
+    pushNextExcelRow();
+
+    // Then continue:
+    const dashboardInterval = setInterval(pushNextDashboardReading, 60000); // every 1 minute
+    const excelInterval     = setInterval(pushNextExcelRow, 20000);        // every 20 seconds
+  </script>
+</body>
+</html>
